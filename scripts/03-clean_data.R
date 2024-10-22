@@ -4,7 +4,7 @@
 # Date: 18 October 2023
 # Contact: veyasan.ragulan@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: president_polls.csv, which is the presidental general election poll sourced from 538
+# Pre-requisites: president_polls.csv, sourced from https://projects.fivethirtyeight.com/polls/ (select Presidential general election polls current cycle)
 
 #### Workspace setup ####
 library(tidyverse)
@@ -24,7 +24,7 @@ data <- read_csv("data/01-raw_data/president_polls.csv") |>
 just_harris_high_quality <- data |>
   filter(
     candidate_name == "Kamala Harris",
-    numeric_grade >= 2.7 # Need to investigate this choice - come back and fix. 
+    numeric_grade >= 3 # Need to investigate this choice - come back and fix. 
     # Also need to look at whether the pollster has multiple polls or just one or two - filter out later
   ) |>
   mutate(

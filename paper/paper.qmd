@@ -1,12 +1,12 @@
 ---
-title: "An abundance of invasive trees in Toronto and a lack of trees in the streets of Toronto's core. "
+title: "A look into Kamala Harris' polls in the upcoming 2024 US Presidential Election "
 subtitle: ""
 author: 
   - Veyasan Ragulan
 thanks: "Code and data are available at: https://github.com/Veyasan1/2024USElectionModel"
 date: today
 date-format: long
-abstract: "Tree- lined streets are an exceptional way to add nature to urban envirnoments. Using the Street Tree data from OpenData Toronto, this paper examines the patterns and trends in Toronto's street trees. Tree species count, count of trees by ward, and distribution of tree-diameters were analysed. Uncovered was a abundance of a non-native tree species, and a lack of trees on the streets of Toronto's core"
+abstract: "The 2024 US election has been seen as a close race between the Democratic nominess Kamala Harris, and the Republican Nominee Donald Trump, with each candidate holding down key states and matching each other in battleground states such as Pennsylvania and Georgia. This paper looks at the polling as of late October 2024 to see how Kamala Harris fares as the election draws near."
 format: pdf
 number-sections: true
 bibliography: references.bib
@@ -18,6 +18,14 @@ bibliography: references.bib
 #| message: false
 
 library(tidyverse)
+
+library(rstanarm)
+
+bayesian_model <-
+  readRDS(file = here::here("models/electionmodel.rds"))
+
+spline_model <- 
+  readRDS(file = here::here("models/splinemodel.rds"))
 ```
 
 # Introduction
@@ -26,9 +34,11 @@ In this paper we look at polling data from 538 on the 2024 US Presidential elect
 
 Section 2 will outline the source of this data. Section 3 covers the model and it's parameters. Section 4 is where discussion will be made about the models predictions and how realistically they line up with current affairs. Finally, section 4 discusses any weakness and limitations that can be considered for another report.
 
+This report was written with the assistance of R @citeR. Additionally, @tidyverse, and @rstanarm were used to clean the data, write models, and analyse results. The structure of this report heeds Rohan Alexander's example @tellingstories.
+
 # Data {#sec-data}
 
-The data used in this model comes from fivethirtyeight.com, a polling site known for their in-depth analysis and data on US elections. Here, we have used the 2024 general election data, originally accessed on 10/21/2024. The data contains information from several polls taken across the United States, including the operator, sponsors, methodology, a numeric grade to quanitfy the quality of the poll, and when and where the poll was taken. From this dataset, polls predicting a Harris win were considered, to construct the predictive model.
+The data used in this model comes from fivethirtyeight.com, a polling site known for their in-depth analysis and data on US elections @fivethirtyeight. Here, we have used the 2024 general election data, originally accessed on 10/21/2024. The data contains information from several polls taken across the United States, including the operator, sponsors, methodology, a numeric grade to quanitfy the quality of the poll, and when and where the poll was taken. From this dataset, polls predicting a Harris win were considered, to construct the predictive model.
 
 # Model
 
@@ -78,11 +88,13 @@ pp_check(spline_model)
 
 # Discussion
 
-## The worrying prominence of Acer platanoides
+## Trends from pollsters
 
-## The lack of trees in Toronto-Centre
+## Trends from states
 
-## Anomalies in DBH diameters and potential causes
+## Trends from sponsors
+
+## Trends from methodology
 
 ## Weaknesses and next steps
 
@@ -90,6 +102,9 @@ pp_check(spline_model)
 
 # Appendix
 
-## Data Cleaning
+## Pollster Analysis
+
+## Poll Blueprint
 
 # References
+

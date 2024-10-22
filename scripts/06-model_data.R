@@ -82,3 +82,14 @@ summary(spline_model)
 # Posterior predictive checks
 pp_check(spline_model)
 
+# Save model
+saveRDS(
+  bayesian_model,
+  file = "models/electionmodel.rds"
+)
+
+saveRDS(
+  spline_model,
+  file = "models/splinemodel.rds"
+)
+
