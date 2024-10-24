@@ -1,11 +1,11 @@
 #### Preamble ####
-# Purpose: Tests... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 26 September 2024 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Tests both simulation and real data used in analysis
+# Author: Veyasan Ragulan
+# Date: 24 September 2024
+# Contact: veyasan.ragulan@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: A simulation dataset, and the real dataset, obatined from https://projects.fivethirtyeight.com/polls/
+# Any other information needed? 
 
 
 #### Workspace setup ####
