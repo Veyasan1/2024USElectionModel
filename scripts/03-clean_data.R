@@ -14,6 +14,7 @@ library(broom)
 library(modelsummary)
 library(rstanarm)
 library(splines)
+library(arrow)
 
 #### Clean data ####
 # Read in the data and clean variable names
@@ -38,3 +39,6 @@ just_harris_high_quality <- data |>
 
 #### Save data ####
 write_csv(just_harris_high_quality, "data/02-analysis_data/harris.csv")
+
+write_parquet(just_harris_high_quality, "data/02-analysis_data/harris.parquet")
+
