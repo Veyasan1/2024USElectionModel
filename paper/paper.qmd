@@ -13,34 +13,6 @@ bibliography: references.bib
 ---
 
 ```{r}
-#| include: true
-#| warning: false
-#| message: false
-
-library(tidyverse)
-
-library(rstanarm)
-
-bayesian_model <-
-  readRDS(file = here::here("models/electionmodel.rds"))
-
-spline_model <- 
-  readRDS(file = here::here("models/splinemodel.rds"))
-```
-
-# Introduction
-
-The 2024 US Presidential race has been closely contested since incumbent president, Joe Biden, announced his exit from the race. The race is primarily between current VP, Democratic Party candidate Kamala Harris (with running mate Time Walz), and former president, Republican Party candidate Donald Trump (with running mate J.D. Vance). Polls across the country have conflicting reports on who will come out on top, with some sources suggesting an unheard-of tie in the electoral college vote (269-269 vote distribution) [@tieVote].
-
-To get a better grasp of nationwide and state opinons going into the election, a predictive model was created in this report. The model utilises data from fivethirtyeight.com, which hosts a dataset of diverse and reputable polls taken across the country. Using this data, we (INSERT WRANGLING DONE TO DATASHEET). Then we constructed a generalized linear model, predicting (INSERT PREDICTOR), using (INSERT PREDICTEES) as predictors. The results from the model show (INSERT RESULTS FROM MODEL)
-
-Section 2 will outline the source of this data. Section 3 covers the model and it's parameters. Section 4 is where discussion will be made about the models predictions and how realistically they line up with current affairs. Finally, section 4 discusses any weakness and limitations that can be considered for another report.
-
-# Data {#sec-data}
-
-The dataset provided by fivethirtyeight contains over 15000 observations across 50 variables. Each observation is an individual poll done on the topic of the 2024 US presidency.
-
-```{r}
 #| include: false
 #| warning: false
 #| message: false
@@ -51,6 +23,54 @@ library(rstanarm)
 
 just_harris_high_quality <-
   read_csv(file = here::here("data/02-analysis_data/harris.csv"))
+
+bayesian_model <-
+  readRDS(file = here::here("models/electionmodel.rds"))
+
+spline_model <- 
+  readRDS(file = here::here("models/splinemodel.rds"))
+```
+
+# Introduction
+
+The 2024 US Presidential race has been closely contested since incumbent president, Joe Biden, announced his exit from the race. The race is primarily between current VP, Democratic Party candidate Kamala Harris (with running mate Time Walz), and former president, Republican Party candidate Donald Trump (with running mate J.D. Vance). Polls across the country have conflicting reports on who will come out on top, with some sources suggesting an unheard-of tie in the eletoral college vote (269-269 vote distribution) [@tieVote].
+
+To get a better grasp of nationwide and state opinions going into the election, a predictive model was created in this report. The model utilises data from fivethirtyeight.com, which hosts a dataset of diverse and reputable polls taken across the country. Using this data, we (INSERT WRANGLING DONE TO DATASHEET). Then we constructed a generalized linear model, predicting (INSERT PREDICTOR), using (INSERT PREDICTEES) as predictors. The results from the model show (INSERT RESULTS FROM MODEL)
+
+Section 2 will outline the source of this data. Section 3 covers the model and it's parameters. Section 4 is where discussion will be made about the models predictions and how realistically they line up with current affairs. Finally, section 4 discusses any weakness and limitations that can be considered for another report.
+
+# Data {#sec-data}
+
+The dataset provided by fivethirtyeight contains over 15000 observations across 50 variables. Each observation is an individual poll done on the topic of the 2024 US presidency.
+
+### Key Variables
+
+#### **`transparency_score:`**
+
+#### **`poll_score:`**
+
+```{r}
+#| include: true
+#| warning: false
+#| message: false
+
+#### Plot data ####
+base_plot <- ggplot(just_harris_high_quality, aes(x = end_date, y = pct)) +
+  theme_classic() +
+  labs(y = "Harris percent", x = "Date")
+
+# Color by pollscore
+base_plot +
+  geom_point(aes(color = factor(pollscore))) +
+  geom_smooth() +
+  theme(legend.position = "bottom")
+
+```
+
+```{r}
+#| include: true
+#| warning: false
+#| message: false
 
 #### Plot data ####
 base_plot <- ggplot(just_harris_high_quality, aes(x = end_date, y = pct)) +
@@ -87,11 +107,19 @@ base_plot +
 
 # Measurement
 
-The dataset comes from fivethirtyeight.com, a polling analysis website originally run by Nate Silvers, who is no longer affiliated with the website. Fivethirtyeight takes polls conducted on a particular topic (in this case the 2024 US presidency), and aggregates them in one dataset. Given the diverse array of polls conducted, there is the possiblity of misleading polls and faulty data making its way into the aggregated dataset. This impacts the usefulness of models trained on this data, and any analysis that comes out of either the model, the dataset, or both. To combat this issue, fivethirtyeight implements its own quality control on the data being aggregated. The following breakdown of checks fivethirtyeight uses comes courtesy of their FAQ and methodology article, which is up to date as of September 24 2024 [@faq538].
+The dataset comes from fivethirtyeight.com, a statistical analysis website dedicated to US sports and elections [@fivethrityeight]. Fivethirtyeight takes polls conducted on a particular topic (in this case the 2024 US presidency), and aggregates them in one dataset.
 
-Fivethirtyeight routinely checks up on pollsters as they produce reports, wther they have an established track record, or if they are just new to data presentation, There are 2 types of checks fivethirtyeight uses: Methodology and Ethics.
+Election polls are used to gauge pulic opinion about candidates, political topics, voter angagement, and public opinion of the election process. Election polls also serve as key insight to political organisations representing candidates, polls can show potenital weak points are low support in areas and populations.
 
-Methodology refers to the scientific rigor exhibited by the pollster, when conducting the poll, and in the presentation of the results. Fivethirtyeight requires each poll to have or easily obtain the following:
+Election polls are similarly to regular polls, they involve asking a sample population a series of questions via a delivery method. The key distinction is that election polls typically try to target *voters*, or people who are most likely to vote in the election cycle being investigated. This is a key challenge to pollsters, as there are many subgroups of voters, such as people who seldom vote or almost never vote. According to Pew Research, a third of US citizens did not vote in the 2020 election, despite that election cycle having high voter turnout [@pew_polls]. There may also be cases when repondents of a poll saying they will/will not vote change their mind come election day.
+
+Election polling has exploded in recent times according to Pew Research. They suggest that double thre are double the amount of active pollsters in 2022 compared to 2000 [@pew_polls]. One reason mentioned is the advent of online polling, which is simple, cheap, and can easily reach US citizens across the country. As a result, while the diversity of pollsters has increased dramatically, this also means there are as many amateur polls being conducted.
+
+Errors in election polling have been an issue in the last two cycles of presidential elections. Between the 2016 and 2020 elections, there has been a trend of pollsters not fully capturing Trump's support. For example in 2020, despite Biden winning the election, there were reports from the American Associcate for Public Opinion Reseach that national polls overstated his victory over Trump by 3.9 percentage points [@pew_polls].
+
+Fivethirty eight mitigates the influx of pollsters and the potential for errors by routinely checking up on pollsters as they produce reports, wther they have an established track record, or if they are just new to data presentation, There are 2 types of checks fivethirtyeight uses: Methodology and Ethics.
+
+Methodology refers to the scientific rigor exhibited by the pollster, when conducting the poll, and in the presentation of the results. Fivethirtyeight requires each poll to have or easily obtain the following [@faq538]:
 
 -   Pollster Identity
 
@@ -103,7 +131,7 @@ Methodology refers to the scientific rigor exhibited by the pollster, when condu
 
 -   Sponsors (Identity and Amount
 
-Even if these conditions are met, fivethirtyeight may refuse to include certain polls in their data, due to flaws in methodology. Some examples include:
+Even if these conditions are met, fivethirtyeight may refuse to include certain polls in their data, due to flaws in methodology. Some examples include [@faq538]:
 
 -   Polls with inappropriate sample for target population
 
@@ -115,7 +143,7 @@ Even if these conditions are met, fivethirtyeight may refuse to include certain 
 
 -   Polls with an "informed ballot" (when information about a candidate is given to the participant before they are asked who they would vote for)
 
-The second check fivethirtyeight implements is ethical standard, adapted from the American Association for Public Opinion Research's Code of Professional Ethics and Practices . Fivethirtyeight may refuse to include polls that:
+The second check fivethirtyeight implements is ethical standard, adapted from the American Association for Public Opinion Research's Code of Professional Ethics and Practices . Fivethirtyeight may refuse to include polls that [@faq538]:
 
 -   Fabricate or falsify data
 
@@ -129,9 +157,9 @@ The second check fivethirtyeight implements is ethical standard, adapted from th
 
 -   Utilize methods that will give misleading results
 
-Fivethirtyeight will conduct an initial check on pollsters, seeing if their methodology and ethics are publicly available, and are in agreement with fivethirtyeight's checks. If unclear, fivethirtyeight will do a more thorough investigation of the pollster, and ask the organizers questions about their methodology and ethics if none were visible in the public report. If there are any violations in ethics, the severity on consequences will vary on wjat the offence is. If there is evidence of falifyin data or engaging in betting, the pollster is blacklisted from their data, any polls that come out of this pollster are extremely dubious and not trustworthy to build a model or report on. Otherwise, pollsters are given a chance to fix ethical issues presented by fivethirtyeight. Failiure to do so results in the pollster and any of its polls being taken off the dataset, but if the pollster shows it has updated its ethics policies and applied them to recent reports, they may be allowed back in.
+Fivethirtyeight will conduct an initial check on pollsters, seeing if their methodology and ethics are publicly available, and are in agreement with fivethirtyeight's checks. If unclear, fivethirtyeight will do a more thorough investigation of the pollster, and ask the organizers questions about their methodology and ethics if none were visible in the public report. If there are any violations in ethics, the severity on consequences will vary on wjat the offence is. If there is evidence of falifyin data or engaging in betting, the pollster is blacklisted from their data, any polls that come out of this pollster are extremely dubious and not trustworthy to build a model or report on. Otherwise, pollsters are given a chance to fix ethical issues presented by fivethirtyeight. Failiure to do so results in the pollster and any of its polls being taken off the dataset, but if the pollster shows it has updated its ethics policies and applied them to recent reports, they may be allowed back in [@faq538].
 
-Partisan polls are a small subset of polls that are made with the backing or organizations affiliated with one or more political organizations. Fivethirtyeight will allow these polls into their data, but they will be marked as "Partisan", and extra checks are put in place to ensure the polling data hasn't been influenced unethically by the pollster or it's affiliated organizations.
+Partisan polls are a small subset of polls that are made with the backing or organizations affiliated with one or more political organizations. Fivethirtyeight will allow these polls into their data, but they will be marked as "Partisan", and extra checks are put in place to ensure the polling data hasn't been influenced unethically by the pollster or it's affiliated organizations [@faq538].
 
 # Model
 
