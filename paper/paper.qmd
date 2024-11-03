@@ -13,7 +13,7 @@ bibliography: references.bib
 ---
 
 ```{r}
-#| include: false
+#| include: true
 #| warning: false
 #| message: false
 
@@ -40,7 +40,52 @@ Section 2 will outline the source of this data. Section 3 covers the model and i
 
 The dataset provided by fivethirtyeight contains over 15000 observations across 50 variables. Each observation is an individual poll done on the topic of the 2024 US presidency.
 
-# Methodology
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+library(rstanarm)
+
+just_harris_high_quality <-
+  read_csv(file = here::here("data/02-analysis_data/harris.csv"))
+
+#### Plot data ####
+base_plot <- ggplot(just_harris_high_quality, aes(x = end_date, y = pct)) +
+  theme_classic() +
+  labs(y = "Harris percent", x = "Date")
+
+# Plots poll estimates and overall smoothing
+base_plot +
+  geom_point() +
+  geom_smooth()
+
+# Color by pollster
+# This gets messy - need to add a filter - see line 21
+base_plot +
+  geom_point(aes(color = pollster)) +
+  geom_smooth() +
+  theme(legend.position = "bottom")
+
+# Facet by pollster
+# Make the line 21 issue obvious
+# Also - is there duplication???? Need to go back and check
+base_plot +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(vars(pollster))
+
+# Color by pollscore
+base_plot +
+  geom_point(aes(color = factor(pollscore))) +
+  geom_smooth() +
+  theme(legend.position = "bottom")
+
+```
+
+# Measurement
 
 The dataset comes from fivethirtyeight.com, a polling analysis website originally run by Nate Silvers, who is no longer affiliated with the website. Fivethirtyeight takes polls conducted on a particular topic (in this case the 2024 US presidency), and aggregates them in one dataset. Given the diverse array of polls conducted, there is the possiblity of misleading polls and faulty data making its way into the aggregated dataset. This impacts the usefulness of models trained on this data, and any analysis that comes out of either the model, the dataset, or both. To combat this issue, fivethirtyeight implements its own quality control on the data being aggregated. The following breakdown of checks fivethirtyeight uses comes courtesy of their FAQ and methodology article, which is up to date as of September 24 2024 [@faq538].
 
@@ -155,4 +200,3 @@ pp_check(spline_model)
 ## Poll Blueprint
 
 # References
-
