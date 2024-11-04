@@ -24,16 +24,10 @@ library(dplyr)
 
 # Read in data from clean_data.r
 just_harris_high_quality <-
-  read_csv(file = here::here("data/02-analysis_data/harris_data.csv"))
+  read_csv(file = here::here("data/02-analysis_data/analysis_data_harris.csv"))
 
 just_trump_high_quality <-
-  read_csv(file = here::here("data/02-analysis_data/trump_data.csv"))
-
-bayesian_model <-
-  readRDS(file = here::here("models/electionmodel.rds"))
-
-spline_model <- 
-  readRDS(file = here::here("models/splinemodel.rds"))
+  read_csv(file = here::here("data/02-analysis_data/analysis_data_trump.csv"))
 ```
 
 # Introduction
@@ -50,7 +44,7 @@ The dataset provided by fivethirtyeight contains over 15000 observations across 
 
 The dataset was read into R [@citeR], and cleaned using the R package tidyverse [@tidyverse]. Due to Kamal's late entry into the race, some polls do not have any data on her specifically. This is why we set a cut-off date at 2024/07/21, the day Kamala replaced Joe Biden as the Democratic nominee.
 
-Fivethirtyeight includes a metric called `numeric_grade`, which combines the pollscore and transparency score. We only included polls with a `numeric_grade` at or above 2.7. This gave us the best balance between quantity and quality. Finally, we create 2 datasets, one with polls predicting a Harris win, the other a Trump win.
+Fivethirtyeight includes a metric called `numeric_grade`, which combines the transparency_score and transparency score. We only included polls with a `numeric_grade` at or above 2.7. This gave us the best balance between quantity and quality. Finally, we create 2 datasets, one with polls predicting a Harris win, the other a Trump win.
 
 ```{r}
 #| include: false
@@ -69,197 +63,254 @@ base_plot_trump <- ggplot(just_trump_high_quality, aes(x = end_date, y = pct)) +
 
 ## Predictors
 
-### **`poll_score:`**
+### **`transparency_score`**
 
-The error and bias associated with a pollster. Positive values indicate more bias and errors, negative values indicate less. This value will tell us if biases in polls influences the predicted percentages of each candidate
+Fivethirtyeight awards a score out of 10 to each pollster based on how informative their methodology is. Understanding the methodology of a pollster assits in understanding any errors or biases present in their findings.
 
 ```{r}
-#| label: fig-pollscore_harris
-#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Harris' win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on their pollscore, which is how fivethirtyeight measures error and bias in polls. The lower the pollscore, the better the poll. 
+#| label: fig-transscore_harris
+#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Harris' win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on their transparency_score, which is fivethirtyeight's metric for transpareny in the pollster's methodology. 
 #| echo: false
 #| warning: false
 #| message: false
 
-# Color by pollscore
+# Color by transparency_score
 base_plot_kamala +
-  geom_point(aes(color = factor(pollscore))) +
-  geom_smooth() +
+  geom_point(aes(color = factor(transparency_score))) +
+  geom_smooth(color = "blue") +
   theme(legend.position = "bottom")
 ```
 
 ```{r}
-#| label: tbl-pollscore_harris
-#| tbl-cap: Summary of pollscores amonst polls predicting a Kamala Harris win. The lower the pollscore, the less prone the polls are to errors and bias. 
+#| label: tbl-transscore_harris
+#| tbl-cap: Summary of transparency_scores amongst polls predicting a Kamala Harris win. The closer the values are to 10, the more trustworthy the predictions. 
 #| echo: false
 #| warning: false
 #| message: false
 
 # Generating summary statistics for Harris
-pollscore_harris_summary <- just_harris_high_quality %>%
+transparency_score_harris_summary <- just_harris_high_quality %>%
   summarize(
-    Min = min(pollscore, na.rm = TRUE),
-    Mean = mean(pollscore, na.rm = TRUE),
-    Median = median(pollscore, na.rm = TRUE),
-    Max = max(pollscore, na.rm = TRUE)
+    Min = min(transparency_score, na.rm = TRUE),
+    Mean = mean(transparency_score, na.rm = TRUE),
+    Median = median(transparency_score, na.rm = TRUE),
+    Max = max(transparency_score, na.rm = TRUE)
   )
 
 # Displaying summary
-pollscore_harris_summary %>% 
+transparency_score_harris_summary %>% 
   kable() %>%
   kable_styling()
 ```
 
 ```{r}
-#| label: fig-pollscore_trump
-#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Trump's win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on their pollscore, which is how fivethirtyeight measures error and bias in polls. The lower the pollscore, the better the poll.
+#| label: fig-transscore_trump
+#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Trump's win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on their transparency_score, which is fivethirtyeight's metric for transpareny in the pollster's methodology.
 #| echo: false
 #| warning: false
 #| message: false
 
-# Color by pollscore
+# Color by transparency_score
 base_plot_trump +
-  geom_point(aes(color = factor(pollscore))) +
-  geom_smooth() +
+  geom_point(aes(color = factor(transparency_score))) +
+  geom_smooth(color = "red") +
   theme(legend.position = "bottom")
 ```
 
 ```{r}
-#| label: tbl-pollscore_trump
-#| tbl-cap: Summary of pollscores amonst polls predicting a Donald Trump win. The lower the pollscore, the less prone the polls are to errors and bias. 
+#| label: tbl-transscore_trump
+#| tbl-cap: Summary of transparency_scores amongst polls predicting a Donald Trump win. The closer the values are to 10, the more trustworthy the predictions. 
+#| echo: false
+#| warning: false
+#| message: false
+
+# Generating summary statistics for Trump
+numeric_grade_trump_summary <- just_trump_high_quality %>%
+  summarize(
+    Min = min(transparency_score, na.rm = TRUE),
+    Mean = mean(transparency_score, na.rm = TRUE),
+    Median = median(transparency_score, na.rm = TRUE),
+    Max = max(transparency_score, na.rm = TRUE)
+  )
+
+# Display summary
+transparency_score_trump_summary %>% 
+  kable() %>%
+  kable_styling()
+
+```
+
+### **`numeric_grade`** 
+
+A cumulative score given to pollster that combines fivethirtyeight's `pollscore` and `transparency_score`. Like `transparency_score`, we believe this metric can give us insight into potential biases in each pollster and poll, which is why it is included in our model.
+
+```{r}
+#| label: fig-numgrade_harris
+#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Harris' win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on their numeric_grade, which is fivethirtyeight's combined metric on transparency and bias/errors. 
+#| echo: false
+#| warning: false
+#| message: false
+
+# Color by transparency_score
+base_plot_kamala +
+  geom_point(aes(color = factor(numeric_grade))) +
+  geom_smooth(color = "blue") +
+  theme(legend.position = "bottom")
+```
+```{r}
+#| label: tbl-numgrade_harris
+#| tbl-cap: Summary of numeric_grades amongst polls predicting a Kamala Harris win.
 #| echo: false
 #| warning: false
 #| message: false
 
 # Generating summary statistics for Harris
-pollscore_trump_summary <- just_trump_high_quality %>%
+numeric_grade_harris_summary <- just_harris_high_quality %>%
   summarize(
-    Min = min(pollscore, na.rm = TRUE),
-    Mean = mean(pollscore, na.rm = TRUE),
-    Median = median(pollscore, na.rm = TRUE),
-    Max = max(pollscore, na.rm = TRUE)
+    Min = min(numeric_grade, na.rm = TRUE),
+    Mean = mean(numeric_grade, na.rm = TRUE),
+    Median = median(numeric_grade, na.rm = TRUE),
+    Max = max(numeric_grade, na.rm = TRUE)
   )
 
 # Display summary
-pollscore_trump_summary %>% 
+numeric_grade_harris_summary %>% 
   kable() %>%
   kable_styling()
 
 ```
 
-### `sample_size`
-
-Polls are conducted over a subset of the targeted population (Hispanics, young people, Texans, LGBTQ+, rural communities, etc.).
 
 ```{r}
-#| label: fig-samplesize_harris
-#| fig-cap: Polls require input from a subset of the target popoulation. This gpah shows the most common sizes for these subsets in polls that predicted a Harris win.
+#| label: fig-numgrade_trump
+#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Trumps' win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on their numeric_grade, which is fivethirtyeight's combined metric on transparency and bias/errors. 
 #| echo: false
 #| warning: false
 #| message: false
 
-#### Plot data ####
-just_harris_high_quality %>%
-  ggplot(mapping=aes(x = sample_size)) +
-  geom_histogram()
+# Color by transparency_score
+base_plot_kamala +
+  geom_point(aes(color = factor(numeric_grade))) +
+  geom_smooth(color = "red") +
+  theme(legend.position = "bottom")
 ```
-
 ```{r}
-#| label: fig-samplesize_trump
-#| fig-cap: Polls require input from a subset of the target popoulation. This gpah shows the most common sizes for these subsets in polls that predicted a Trump win.
+#| label: tbl-transscore_trump
+#| tbl-cap: Summary of transparency_scores amongst polls predicting a Donald Trump win. The closer the values are to 10, the more trustworthy the predictions. 
 #| echo: false
 #| warning: false
 #| message: false
 
-#### Plot data ####
-just_trump_high_quality %>%
-  ggplot(mapping=aes(x = sample_size)) +
-  geom_histogram()
+# Generating summary statistics for Trump
+numeric_grade_trump_summary <- just_trump_high_quality %>%
+  summarize(
+    Min = min(transparency_score, na.rm = TRUE),
+    Mean = mean(transparency_score, na.rm = TRUE),
+    Median = median(transparency_score, na.rm = TRUE),
+    Max = max(transparency_score, na.rm = TRUE)
+  )
+
+# Display summary
+numeric_grade_trump_summary %>% 
+  kable() %>%
+  kable_styling()
+
 ```
 
-### `state`
-
-The state that each poll as conducted in. If there are any empty values, we assume these are national polls.
+### `pollster`
 
 ```{r}
-#| include: true
+#| label: fig-pollster_harris
+#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Harris' win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on the pollster who authored the poll. 
+#| echo: false
 #| warning: false
 #| message: false
 
-#### Plot data ####
-just_harris_high_quality %>%
-  ggplot(mapping=aes(y = state), x=count(n)) +
-  geom_bar()
-
-just_trump_high_quality %>%
-  ggplot(mapping=aes(y = state), x=count(n)) +
-  geom_bar()
-```
-
-```{r}
-#| include: true
-#| warning: false
-#| message: false
-
-#### Plot data ####
-base_plot <- ggplot(just_harris_high_quality, aes(x = end_date, y = pct)) +
-  theme_classic() +
-  labs(y = "Harris percent", x = "Date")
-
-# Plots poll estimates and overall smoothing
-base_plot +
-  geom_point() +
-  geom_smooth()
-
-# Color by pollster
-# This gets messy - need to add a filter - see line 21
-base_plot +
+# Color by transparency_score
+base_plot_kamala +
   geom_point(aes(color = pollster)) +
-  geom_smooth() +
+  geom_smooth(color = "blue") +
   theme(legend.position = "bottom")
-
-# Facet by pollster
-# Make the line 21 issue obvious
-# Also - is there duplication???? Need to go back and check
-base_plot +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(vars(pollster))
-
-# Color by pollscore
-base_plot +
-  geom_point(aes(color = factor(pollscore))) +
-  geom_smooth() +
-  theme(legend.position = "bottom")
-
 ```
 
-### `party_binary`
+```{r}
+#| label: fig-pollster_trump
+#| fig-cap: As election day draws close, pollsters are wrapping up their polls and posting their predictions on who will win. The polls in this graph predict Trump's win percentage, with the average in the blue line. The dots in the graph below represent individual polls conducted in the months leading up to the election. They are coloured based on the pollster who authored the poll.  
+#| echo: false
+#| warning: false
+#| message: false
+
+# Color by transparency_score
+base_plot_trump +
+  geom_point(aes(color = pollster)) +
+  geom_smooth(color = "red") +
+  theme(legend.position = "bottom")
+```
+
+### `states`
+
+```{r}
+#| label: fig-state
+#| fig-cap: Battleground states are what usually determines the winner of a presidential election. This figure outlines the polling outcomes of each candidate from August to November, for each of the seven battleground states this election cycle.
+#| echo: false
+#| warning: false
+#| message: false
+#| 
+# Define major swing states
+swing_states <- c("Arizona", "Georgia", "Michigan", "Nevada", "North Carolina", "Pennsylvania", "Wisconsin")
+
+combined_data <- bind_rows(
+  just_harris_high_quality |> mutate(candidate = "Kamala Harris"),
+  just_trump_high_quality |> mutate(candidate = "Donald Trump")
+)
+
+# Filter data for Harris and Trump in the swing states
+swing_states_data <- combined_data |>
+  filter(state %in% swing_states)
+
+# Create a base plot for swing states data
+swing_states_plot <- ggplot(swing_states_data, aes(x = end_date, y = pct, color = candidate)) +
+  theme_minimal() +
+  labs(x = "Polling End Date", y = "Polling Percentage", title = "Polling Outcomes in Swing States") +
+  theme(legend.position = "bottom")
+
+# Facet the plot by state
+swing_states_plot +
+  geom_point(aes(shape = candidate), alpha = 0.7) +
+  geom_smooth(aes(linetype = candidate), se = FALSE) +
+  facet_wrap(vars(state)) +
+  scale_color_manual(values = c("Kamala Harris" = "blue", "Donald Trump" = "red"))
+
+```
 
 ### `end_date`
 
 Every poll has a start and end date for querying its participants. Polls that are conducted closer to election day may be more reflective of American opinions as opposed to polls conducted in August or September. This is why we will be using this variable as one of our predictors in the model.
 
 ```{r}
-#| include: true
+#| label: fig-enddate_harris
+#| fig-cap: Polls are conducted from a start date to an end date. The closer the end date is to election day, the more insightful the results are to analysts and the general public. This distribution shows the end date of polls predicting a Kamala Harris win.
+#| echo: false
 #| warning: false
 #| message: false
 
 #### Plot data ####
 just_harris_high_quality %>%
   ggplot(mapping=aes(x = end_date)) +
-  geom_histogram()
+  geom_histogram(fill = "blue", alpha = 0.7, color = "black",)
+```
 
+```{r}
+#| label: fig-enddate_trump
+#| fig-cap: Polls are conducted from a start date to an end date. The closer the end date is to election day, the more insightful the results are to analysts and the general public. This distribution shows the end date of polls predicting a Donald Trump win.
+#| echo: false
+#| warning: false
+#| message: false
 
-end_date_summary <- just_harris_high_quality %>%
-  summarize(
-    Min = min(end_date, na.rm = TRUE),
-    Max = max(end_date, na.rm = TRUE)
-  )
-
-end_date_summary %>% 
-  kable() %>%
-  kable_styling()
-
+#### Plot data ####
+just_trump_high_quality %>%
+  ggplot(mapping=aes(x = end_date)) +
+  geom_histogram(fill = "red", alpha = 0.7, color = "black",)
 ```
 
 # Measurement
