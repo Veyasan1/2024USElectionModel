@@ -16,16 +16,18 @@ library(rstanarm)
 library(splines)
 library(arrow)
 
+#### Workspace setup ####
+library(tidyverse)
+
 #### Clean data ####
-# Read in the data and clean variable names
-data <- read_csv("data/01-raw_data/president_polls.csv") |>
+data <- read_csv("data/01-raw_data/raw_elections_data.csv") |>
   clean_names()
 
 # Filter data to Harris estimates based on high-quality polls after she declared
 just_harris_high_quality <- data |>
   filter(
     candidate_name == "Kamala Harris",
-    numeric_grade >= 3 # Need to investigate this choice - come back and fix. 
+    numeric_grade >= 2.7 # Need to investigate this choice - come back and fix. 
     # Also need to look at whether the pollster has multiple polls or just one or two - filter out later
   ) |>
   mutate(
@@ -37,8 +39,21 @@ just_harris_high_quality <- data |>
     num_harris = round((pct / 100) * sample_size, 0) # Need number not percent for some models
   )
 
+# Filter data to Trump estimates based on high-quality polls after he declared
+just_trump_high_quality <- data |>
+  filter(
+    candidate_name == "Donald Trump",
+    numeric_grade >= 2.7
+  ) |>
+  mutate(
+    state = if_else(is.na(state), "National", state),
+    end_date = mdy(end_date)
+  ) |>
+  filter(end_date >= as.Date("2024-07-21")) |> # Update with Trump's declaration date if needed
+  mutate(
+    num_trump = round((pct / 100) * sample_size, 0)
+  )
+
 #### Save data ####
-write_csv(just_harris_high_quality, "data/02-analysis_data/harris.csv")
-
-write_parquet(just_harris_high_quality, "data/02-analysis_data/harris.parquet")
-
+write_csv(just_harris_high_quality, "data/02-analysis_data/harris_data.csv")
+write_csv(just_trump_high_quality, "data/02-analysis_data/trump_data.csv")
