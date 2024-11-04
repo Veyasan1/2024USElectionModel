@@ -18,7 +18,7 @@ bibliography: references.bib
 #| message: false
 
 library(tidyverse)
-
+library(kableExtra)
 library(rstanarm)
 
 just_harris_high_quality <-
@@ -41,13 +41,13 @@ Section 2 will outline the source of this data. Section 3 covers the model and i
 
 # Data {#sec-data}
 
-The dataset provided by fivethirtyeight contains over 15000 observations across 50 variables. Each observation is an individual poll done on the topic of the 2024 US presidency.
+The dataset provided by fivethirtyeight contains over 15000 observations across 50 variables. Each observation is a poll conducted on the 2024 US Presidential Election. Pollsters are required by fivethirtyeight to disclose certain information about their poll, either publicly, or through an investigation. Of this information, a handful are key to the predictive model.
 
-### Key Variables
+## Predictors
 
-#### **`transparency_score:`**
+### **`poll_score:`**
 
-#### **`poll_score:`**
+The error and bias associated with a pollster. Positive values indicate more bias and errors, negative values indicate less. This value will tell us if biases in polls influences the predicted percentages of each candidate
 
 ```{r}
 #| include: true
@@ -64,6 +64,62 @@ base_plot +
   geom_point(aes(color = factor(pollscore))) +
   geom_smooth() +
   theme(legend.position = "bottom")
+
+pollscore_summary <- just_harris_high_quality %>%
+  summarize(
+    Min = min(pollscore, na.rm = TRUE),
+    Mean = mean(pollscore, na.rm = TRUE),
+    Median = median(pollscore, na.rm = TRUE),
+    Max = max(pollscore, na.rm = TRUE)
+  )
+
+pollscore_summary %>% 
+  kable() %>%
+  kable_styling()
+
+```
+
+### `sample_size`
+
+Polls are conducted over a subset of the targeted population (Hispanics, young people, Texans, LGBTQ+, rural communities, etc.).
+
+```{r}
+#| include: true
+#| warning: false
+#| message: false
+
+#### Plot data ####
+base_plot +
+  geom_point(aes(color = factor(sample_size))) +
+  geom_smooth() +
+  theme(legend.position = "bottom")
+
+```
+
+### `state`
+
+The state that each poll as conducted in. If there are any empty values, we assume these are national polls.
+
+```{r}
+#| include: true
+#| warning: false
+#| message: false
+
+#### Plot data ####
+just_harris_high_quality %>%
+  ggplot(mapping=aes(x = state), y=count(n)) +
+  geom_bar()
+
+
+state_summary <- just_harris_high_quality %>%
+  summarize(
+    Min = min(count(state), na.rm = TRUE),
+    Max = max(state, na.rm = TRUE)
+  )
+
+state_summary %>% 
+  kable() %>%
+  kable_styling()
 
 ```
 
@@ -105,19 +161,48 @@ base_plot +
 
 ```
 
+### `party_binary`
+
+### `end_date`
+
+Every poll has a start and end date for querying its participants. Polls that are conducted closer to election day may be more reflective of American opinions as opposed to polls conducted in August or September. This is why we will be using this variable as one of our predictors in the model.
+
+```{r}
+#| include: true
+#| warning: false
+#| message: false
+
+#### Plot data ####
+just_harris_high_quality %>%
+  ggplot(mapping=aes(x = end_date)) +
+  geom_histogram()
+
+
+end_date_summary <- just_harris_high_quality %>%
+  summarize(
+    Min = min(end_date, na.rm = TRUE),
+    Max = max(end_date, na.rm = TRUE)
+  )
+
+end_date_summary %>% 
+  kable() %>%
+  kable_styling()
+
+```
+
 # Measurement
 
-The dataset comes from fivethirtyeight.com, a statistical analysis website dedicated to US sports and elections [@fivethrityeight]. Fivethirtyeight takes polls conducted on a particular topic (in this case the 2024 US presidency), and aggregates them in one dataset.
+The dataset comes from fivethirtyeight.com, a statistical analysis website dedicated to US sports and elections [@fivethirtyeight]. Fivethirtyeight takes polls conducted on a particular topic (in this case the 2024 US presidency), and aggregates them in one dataset.
 
-Election polls are used to gauge pulic opinion about candidates, political topics, voter angagement, and public opinion of the election process. Election polls also serve as key insight to political organisations representing candidates, polls can show potenital weak points are low support in areas and populations.
+Election polls are used to gauge public opinion about candidates, political topics, voter engagement, and public opinion of the election process. Election polls also serve as key insight to political organisations representing candidates, polls can show potential weak points across demographics.
 
-Election polls are similarly to regular polls, they involve asking a sample population a series of questions via a delivery method. The key distinction is that election polls typically try to target *voters*, or people who are most likely to vote in the election cycle being investigated. This is a key challenge to pollsters, as there are many subgroups of voters, such as people who seldom vote or almost never vote. According to Pew Research, a third of US citizens did not vote in the 2020 election, despite that election cycle having high voter turnout [@pew_polls]. There may also be cases when repondents of a poll saying they will/will not vote change their mind come election day.
+Election polls are similarly to regular polls, they involve asking a sample population a series of questions via a delivery method. The key distinction is that election polls typically try to target *voters*, or people who are most likely to vote in the election cycle being investigated. This is a key challenge to pollsters, as there are many subgroups of voters, such as people who seldom vote or never vote. According to Pew Research, a third of US citizens did not vote in the 2020 election, despite the 2020 election cycle having high voter turnout [@pew_polls]. There may also be cases when respondents of a poll reconsider whether they will vote come election day.
 
-Election polling has exploded in recent times according to Pew Research. They suggest that double thre are double the amount of active pollsters in 2022 compared to 2000 [@pew_polls]. One reason mentioned is the advent of online polling, which is simple, cheap, and can easily reach US citizens across the country. As a result, while the diversity of pollsters has increased dramatically, this also means there are as many amateur polls being conducted.
+Election polling has exploded in recent times according to Pew Research. They suggest that double there are double the amount of active pollsters in 2022 compared to 2000 [@pew_polls]. One reason mentioned is the advent of online polling, which is simple, cheap, and can easily reach US citizens across the country, compared to traditional methods such as poll by phone and mail. As a result, while the diversity of pollsters has increased dramatically, the variance in results methodology, and ethics have also increased
 
-Errors in election polling have been an issue in the last two cycles of presidential elections. Between the 2016 and 2020 elections, there has been a trend of pollsters not fully capturing Trump's support. For example in 2020, despite Biden winning the election, there were reports from the American Associcate for Public Opinion Reseach that national polls overstated his victory over Trump by 3.9 percentage points [@pew_polls].
+Errors in election polling have been an issue in the last two cycles of presidential elections. Between the 2016 and 2020 elections, there has been a trend of pollsters not fully capturing Trump's support. For example in 2020, despite Biden winning the election, there were reports from the American Associcate for Public Opinion Research that national polls overstated his victory over Trump by 3.9 percentage points [@pew_polls].
 
-Fivethirty eight mitigates the influx of pollsters and the potential for errors by routinely checking up on pollsters as they produce reports, wther they have an established track record, or if they are just new to data presentation, There are 2 types of checks fivethirtyeight uses: Methodology and Ethics.
+Fivethirty eight mitigates the influx of pollsters and the potential for errors by routinely checking up on pollsters as they produce reports. Fivethirtyeight checks every pollster, regardless of experience or prestige. There are 2 types of checks fivethirtyeight uses: Methodology and Ethics.
 
 Methodology refers to the scientific rigor exhibited by the pollster, when conducting the poll, and in the presentation of the results. Fivethirtyeight requires each poll to have or easily obtain the following [@faq538]:
 
@@ -157,7 +242,7 @@ The second check fivethirtyeight implements is ethical standard, adapted from th
 
 -   Utilize methods that will give misleading results
 
-Fivethirtyeight will conduct an initial check on pollsters, seeing if their methodology and ethics are publicly available, and are in agreement with fivethirtyeight's checks. If unclear, fivethirtyeight will do a more thorough investigation of the pollster, and ask the organizers questions about their methodology and ethics if none were visible in the public report. If there are any violations in ethics, the severity on consequences will vary on wjat the offence is. If there is evidence of falifyin data or engaging in betting, the pollster is blacklisted from their data, any polls that come out of this pollster are extremely dubious and not trustworthy to build a model or report on. Otherwise, pollsters are given a chance to fix ethical issues presented by fivethirtyeight. Failiure to do so results in the pollster and any of its polls being taken off the dataset, but if the pollster shows it has updated its ethics policies and applied them to recent reports, they may be allowed back in [@faq538].
+Fivethirtyeight will conduct an initial check on pollsters, seeing if their methodology and ethics are publicly available, and are in agreement with fivethirtyeight's checks. If unclear, fivethirtyeight will do a more thorough investigation of the pollster, and ask the organizers questions about their methodology and ethics if none were visible in the public report. If there are any violations in ethics, the severity on consequences will vary on what the offence is. If there is evidence of falsifying data or engaging in betting markets, the pollster is blacklisted from their data. Otherwise, pollsters are given a chance to fix ethical issues presented by fivethirtyeight. Failure to do so results in the pollster and any of its polls being taken off the dataset, but fivethirtyeight can reverse this decision if the pollster demonstrates satifactory ethics and methodology practices[@faq538].
 
 Partisan polls are a small subset of polls that are made with the backing or organizations affiliated with one or more political organizations. Fivethirtyeight will allow these polls into their data, but they will be marked as "Partisan", and extra checks are put in place to ensure the polling data hasn't been influenced unethically by the pollster or it's affiliated organizations [@faq538].
 
